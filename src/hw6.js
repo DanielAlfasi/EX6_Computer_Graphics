@@ -102,7 +102,7 @@ class ThreeDScene {
             backNetMatrix.makeTranslation(0, 0, -11.5);
             backNetMatrix.multiply(rotationMatrix);
             const backNetGeometry = new THREE.PlaneGeometry(120, 46.2);
-            const backNetMaterial = new THREE.MeshBasicMaterial({ color: 'lightgrey', side: THREE.DoubleSide, opacity: 0.5});
+            const backNetMaterial = new THREE.MeshPhongMaterial({ color: 'lightgrey', side: THREE.DoubleSide, transparent: true, opacity: 0.5 });
             const backNet = new THREE.Mesh(backNetGeometry, backNetMaterial);
             backNet.applyMatrix4(backNetMatrix);
             return backNet;
@@ -123,7 +123,7 @@ class ThreeDScene {
             triangleMatrix.multiply(rotationMatrix);
 
             const triangleGeometry = new THREE.ShapeGeometry(triangleShape);
-            const triangleMaterial = new THREE.MeshBasicMaterial({ color: 'lightgrey', side: THREE.DoubleSide });
+            const triangleMaterial = new THREE.MeshPhongMaterial({ color: 'lightgrey', side: THREE.DoubleSide, transparent: true, opacity: 0.5 });
             const triangle = new THREE.Mesh(triangleGeometry, triangleMaterial);
             triangle.applyMatrix4(triangleMatrix);
             return triangle;
@@ -252,6 +252,35 @@ class ThreeDScene {
         }
     }
 
+    resetBallPosition() {
+        const startPoint = this.curves[this.currentCurveIndex].getPoint(0);
+        const ballMatrix = new THREE.Matrix4();
+        ballMatrix.makeTranslation(startPoint.x, startPoint.y, startPoint.z);
+        this.ball.matrix.copy(ballMatrix);
+    }
+
+
+    checkCollision() {
+        this.cards.forEach(card => {
+            if (card.object.visible) {
+                const distance = this.ball.position.distanceTo(card.object.position);
+                if (distance < 3) {
+                    card.object.visible = false;
+                    this.collectedCards++;
+                    this.resetBallPosition(); // Stop the ball's movement when it collides with a card
+                }
+            }
+        });
+
+        const elapsedTime = performance.now() / 1000;
+        const t = elapsedTime / 5;
+        if (t % 1 > 0.99) {
+            const fairPlay = 100 * Math.pow(2, -((this.collectedCards % 3) + 10 * Math.floor(this.collectedCards / 3)) / 10);
+            // alert(`Fair Play score: ${fairPlay.toFixed(2)}`);
+            this.collectedCards = 0;
+        }
+    }
+
     handleKeyPress(event) {
         switch (event.key) {
             case 'w':
@@ -267,9 +296,13 @@ class ThreeDScene {
                 break;
             case 'ArrowLeft':
                 this.currentCurveIndex = (this.currentCurveIndex - 1 + this.curves.length) % this.curves.length;
+                this.resetBallPosition();
+                this.animationStartTime = performance.now(); // Reset the animation start time
                 break;
             case 'ArrowRight':
                 this.currentCurveIndex = (this.currentCurveIndex + 1) % this.curves.length;
+                this.resetBallPosition();
+                this.animationStartTime = performance.now(); // Reset the animation start time
                 break;
         }
     }
@@ -284,19 +317,20 @@ class ThreeDScene {
         this.renderer.render(this.scene, this.camera);
     }
 
+
     animateBall() {
-        const t = (performance.now() % 10000) / 10000; // 0 <= t <= 1 over 10 seconds
-        const point = this.curves[this.currentCurveIndex].getPoint(t);
+        const elapsedTime = performance.now() / 1000; // Elapsed time in seconds
+        const t = elapsedTime / 5; // Adjust the divisor to control the animation speed
+
+        const point = this.curves[this.currentCurveIndex].getPoint(t % 1);
         const ballMatrix = new THREE.Matrix4();
         ballMatrix.makeTranslation(point.x, point.y, point.z);
         this.ball.matrix.copy(ballMatrix);
 
-        if (this.animationXEnabled) {
-            this.ball.applyMatrix4(this.createRotationMatrix('x', this.speedFactor));
-        }
-        if (this.animationYEnabled) {
-            this.ball.applyMatrix4(this.createRotationMatrix('y', this.speedFactor));
-        }
+        // Rotate the ball like a planet
+        const rotationMatrix = new THREE.Matrix4();
+        rotationMatrix.makeRotationY(elapsedTime);
+        this.ball.applyMatrix4(rotationMatrix);
 
         const cameraMatrix = new THREE.Matrix4();
         cameraMatrix.makeTranslation(point.x, point.y + 30, point.z + 30);
