@@ -35,12 +35,10 @@ class ThreeDScene {
 		this.initCurves();
         this.initMultipleCards();
 
-        this.currentCurveIndex = 0;
-        this.collectedCards = 0;
+        this.currentCurveIndex = 0; 
 
         this.controls.update();
 
-        document.addEventListener('keydown', this.toggleOrbit.bind(this));
         document.addEventListener('keydown', this.handleKeyPress.bind(this));
 
         this.animate();
@@ -60,16 +58,18 @@ class ThreeDScene {
 		const t = ((Date.now() / 4000) % 1); // Slower increment rate
 		const curve = this.curves[this.currentCurveIndex];  // Use the current curve
 		const point = curve.getPoint(t);
-	
-		// Calculate the new camera position with an offset, only modifying the Z-coordinate
-		const cameraMatrix = new THREE.Matrix4();
-		const fixedY = 30;  // Maintain a constant Y offset
-		const fixedX = 0;   // Maintain a constant X position
-		const zOffset = 150;  // Distance behind the ball on the Z-axis
-	
-		cameraMatrix.makeTranslation(fixedX, fixedY, point.z + zOffset);
-		this.camera.matrix = cameraMatrix;
-		this.camera.matrixAutoUpdate = false;
+
+        if (!this.isOrbitEnabled) {
+            // Calculate the new camera position with an offset, only modifying the Z-coordinate
+            const cameraMatrix = new THREE.Matrix4();
+            const fixedY = 30;  // Maintain a constant Y offset
+            const fixedX = 0;   // Maintain a constant X position
+            const zOffset = 150;  // Distance behind the ball on the Z-axis
+            cameraMatrix.makeTranslation(fixedX, fixedY, point.z + zOffset);
+            this.camera.matrix = cameraMatrix;
+            this.camera.matrixAutoUpdate = false;
+        }
+
 		this.camera.lookAt(new THREE.Vector3(point.x, point.y, point.z));
 	}
 	
@@ -190,7 +190,7 @@ class ThreeDScene {
         this.scene.add(this.goalObject);
     }
 
-    initBall() {
+    initBall1() {
         const ballMatrix = new THREE.Matrix4();
         ballMatrix.makeTranslation(0, 0, 100);
         const ballTexture = new THREE.TextureLoader().load('src/textures/soccer_ball.jpg');
@@ -200,6 +200,15 @@ class ThreeDScene {
         this.ball.applyMatrix4(ballMatrix);
         this.scene.add(this.ball);
     }
+
+	initBall() {
+		const ballTexture = new THREE.TextureLoader().load('src/textures/soccer_ball.jpg');
+		const ballGeometry = new THREE.SphereGeometry(3, 32, 32);  // Sphere centered at origin
+		const ballMaterial = new THREE.MeshPhongMaterial({ map: ballTexture });
+		this.ball = new THREE.Mesh(ballGeometry, ballMaterial);
+		this.scene.add(this.ball);  // Initially add the ball to the scene without setting its position
+	}
+	
 
     initLighting() {
         const directionalLight1 = new THREE.DirectionalLight(0xffffff, 1);
@@ -238,52 +247,24 @@ class ThreeDScene {
         ];
     }
 
-	initCurves1() {
-		this.curves = [];
-	
-		// Right Winger Route
-		const curve1 = new THREE.QuadraticBezierCurve3(
-			new THREE.Vector3(0, 0, 100),
-			new THREE.Vector3(50, 0, 50),
-			new THREE.Vector3(0, 0, 0)
-		);
-	
-		// Center Forward Route
-		const curve2 = new THREE.QuadraticBezierCurve3(
-			new THREE.Vector3(0, 0, 100),
-			new THREE.Vector3(0, 50, 50),
-			new THREE.Vector3(0, 0, 0)
-		);
-	
-		// Left Winger Route
-		const curve3 = new THREE.QuadraticBezierCurve3(
-			new THREE.Vector3(0, 0, 100),
-			new THREE.Vector3(-50, 0, 50),
-			new THREE.Vector3(0, 0, 0)
-		);
-	
-		this.curves.push(curve1, curve2, curve3);
-		this.currentCurveIndex = 0;  // Start with the first curve
-	}
-
 	initCurves() {
 		this.curves = [];
 	
-		// Right Winger Route (Adjusted for longer path)
+		// Right Winger Route 
 		const curve1 = new THREE.QuadraticBezierCurve3(
 			new THREE.Vector3(0, 0, 300), // Start further back
 			new THREE.Vector3(150, 0, 150), // Control point further out
 			new THREE.Vector3(0, 0, 0) // End at the goal
 		);
 	
-		// Center Forward Route (Adjusted for longer path)
+		// Center Forward Route 
 		const curve2 = new THREE.QuadraticBezierCurve3(
 			new THREE.Vector3(0, 0, 300), // Start further back
 			new THREE.Vector3(0, 150, 150), // Control point further out
 			new THREE.Vector3(0, 0, 0) // End at the goal
 		);
 	
-		// Left Winger Route (Adjusted for longer path)
+		// Left Winger Route 
 		const curve3 = new THREE.QuadraticBezierCurve3(
 			new THREE.Vector3(0, 0, 300), // Start further back
 			new THREE.Vector3(-150, 0, 150), // Control point further out
@@ -293,62 +274,47 @@ class ThreeDScene {
 		this.curves.push(curve1, curve2, curve3);
 		this.currentCurveIndex = 0; // Start with the first curve
 	}
-	
-	
-	
-
-    initCards() {
-        this.cards = [];
-
-        for (let i = 0; i < 6; i++) {
-            const cardTexture = new THREE.TextureLoader().load('src/textures/yellow_card.jpg');
-            const cardGeometry = new THREE.BoxGeometry(4, 6, 0.1);
-            const cardMaterial = new THREE.MeshPhongMaterial({ map: cardTexture, transparent: true, opacity: 0.8 });
-            const card = new THREE.Mesh(cardGeometry, cardMaterial);
-
-            const t = i * 0.1 + 0.2; // Distribute cards along the curve
-            const point = this.curves[0].getPoint(t);
-            const cardMatrix = new THREE.Matrix4();
-            cardMatrix.makeTranslation(point.x, point.y, point.z);
-            card.applyMatrix4(cardMatrix);
-
-            this.cards.push({ curve: this.curves[0], t: t, object: card });
-            this.scene.add(card);
-        }
-    }
-
-	initCard() {
-		const cardTexture = new THREE.TextureLoader().load('src/textures/yellow_card.jpg');
-		const cardGeometry = new THREE.BoxGeometry(4, 6, 0.1);
-		const cardMaterial = new THREE.MeshPhongMaterial({ map: cardTexture, transparent: true, opacity: 0.8 });
-		this.card = new THREE.Mesh(cardGeometry, cardMaterial);
-	
-		this.positionCardOnCurve(0.5); // Position the card halfway along the current curve
-		this.scene.add(this.card);
-	}
 
 	initMultipleCards() {
+		this.numYellowCards = 0;
+		this.numRedCards = 0;
 		this.cards = [];
-		const cardPositions = [0.2, 0.4, 0.6, 0.8]; // Positions along the curve as t values
+		const yellowCardTexture = new THREE.TextureLoader().load('src/textures/yellow_card.jpg');
+		const redCardTexture = new THREE.TextureLoader().load('src/textures/red_card.jpg');
 	
-		for (let t of cardPositions) {
-			const cardTexture = new THREE.TextureLoader().load('src/textures/yellow_card.jpg');
-			const cardGeometry = new THREE.BoxGeometry(4, 6, 0.1);
-			const cardMaterial = new THREE.MeshPhongMaterial({ map: cardTexture, transparent: true, opacity: 0.8 });
-			const card = new THREE.Mesh(cardGeometry, cardMaterial);
-			this.positionCardOnCurve(t, card);
-			this.scene.add(card);
-			this.cards.push(card);
+		for (let i = 0; i < this.curves.length; i++) {
+			for (let j = 0; j < 4; j++) {
+				const t = Math.random() * (0.98 - 0.2) + 0.2;
+				const cardTexture = Math.random() > 0.5 ? yellowCardTexture : redCardTexture;
+				const cardGeometry = new THREE.BoxGeometry(4, 6, 0.1);
+				const cardMaterial = new THREE.MeshPhongMaterial({
+					map: cardTexture,
+					transparent: true,
+					opacity: 0.8
+				});
+				const card = new THREE.Mesh(cardGeometry, cardMaterial);
+				this.positionCardOnCurve(t, card, i);
+				this.scene.add(card);
+				this.cards.push({
+					mesh: card,
+					curveIndex: i,
+					t: t,
+					type: cardTexture === yellowCardTexture ? 'yellow' : 'red'
+				});
+			}
 		}
 	}
 	
-	positionCardOnCurve(t, card) {
-		const point = this.curves[this.currentCurveIndex].getPoint(t);
+	
+	positionCardOnCurve(t, card, curveIndex) {
+		const curve = this.curves[curveIndex];  // Select the curve based on the index
+		const point = curve.getPoint(t);
 		const cardMatrix = new THREE.Matrix4();
 		cardMatrix.makeTranslation(point.x, point.y, point.z);
 		card.matrix = cardMatrix;
 		card.matrixAutoUpdate = false;
 	}
+	
 
     toggleWireframe() {
         this.goalObject.traverse((child) => {
@@ -359,53 +325,21 @@ class ThreeDScene {
         this.ball.material.wireframe = !this.ball.material.wireframe;
     }
 
-    toggleOrbit(event) {
-        if (event.key === 'o') {
-            this.isOrbitEnabled = !this.isOrbitEnabled;
-        }
-    }
-
-    resetBallPosition() {
-        const startPoint = this.curves[this.currentCurveIndex].getPoint(0);
-        const ballMatrix = new THREE.Matrix4();
-        ballMatrix.makeTranslation(startPoint.x, startPoint.y, startPoint.z);
-        this.ball.matrix.copy(ballMatrix);
-    }
-
-
-    checkCollision() {
-        this.cards.forEach(card => {
-            if (card.object.visible) {
-                const distance = this.ball.position.distanceTo(card.object.position);
-                if (distance < 3) {
-                    card.object.visible = false;
-                    this.collectedCards++;
-                    this.resetBallPosition(); // Stop the ball's movement when it collides with a card
-                }
-            }
-        });
-
-        const elapsedTime = performance.now() / 1000;
-        const t = elapsedTime / 5;
-        if (t % 1 > 0.99) {
-            const fairPlay = 100 * Math.pow(2, -((this.collectedCards % 3) + 10 * Math.floor(this.collectedCards / 3)) / 10);
-            // alert(`Fair Play score: ${fairPlay.toFixed(2)}`);
-            this.collectedCards = 0;
-        }
-    }
+	resetBallPosition() {
+		this.currentCurveIndex = 0; 
+		const startPoint = this.curves[this.currentCurveIndex].getPoint(0);
+		const ballMatrix = new THREE.Matrix4();
+		ballMatrix.makeTranslation(startPoint.x, startPoint.y, startPoint.z);
+		this.ball.matrix = ballMatrix;
+	}	
 
     handleKeyPress(event) {
         switch (event.key) {
+            case 'o':
+                this.isOrbitEnabled = !this.isOrbitEnabled;
+                break;
             case 'w':
                 this.toggleWireframe();
-                break;
-            case '+':
-            case 'ArrowUp':
-                this.speedFactor *= 1.1;
-                break;
-            case '-':
-            case 'ArrowDown':
-                this.speedFactor *= 0.9;
                 break;
 			case 'ArrowRight':
 				this.currentCurveIndex = (this.currentCurveIndex + this.curves.length - 1) % this.curves.length;
@@ -418,62 +352,94 @@ class ThreeDScene {
 
 	animate() {
 		requestAnimationFrame(this.animate.bind(this));
+		this.controls.enabled = this.isOrbitEnabled;
+		this.controls.update();
+		//console.log(this.controls.enabled);
 		this.animateBall();
 		this.updateCamera();
 		this.renderer.render(this.scene, this.camera);
 	}
 
-	animateBall() {
-		const t = ((Date.now() / 4000) % 1); // Slower increment rate
-		const point = this.curves[this.currentCurveIndex].getPoint(t);
-		const ballMatrix = new THREE.Matrix4();
-		ballMatrix.makeTranslation(point.x, point.y, point.z);
-		this.ball.matrix = ballMatrix;
-		this.ball.matrixAutoUpdate = false;
-	
-		// Check collision for each card
-		this.cards.forEach((card, index) => {
-			const cardPosition = new THREE.Vector3().setFromMatrixPosition(card.matrix);
-			if (cardPosition.distanceTo(point) < 5) {
-				console.log('Card collected at position:', index);
-				this.scene.remove(card);
-				this.cards.splice(index, 1); // Remove card from the array
+	checkCollisions(point) {
+		// Check collision for cards on the current curve
+		this.cards.forEach((cardObj, index) => {
+			if (cardObj.curveIndex === this.currentCurveIndex) {
+				const cardPosition = new THREE.Vector3().setFromMatrixPosition(cardObj.mesh.matrix);
+				if (cardPosition.distanceTo(point) < 5) {
+					this.scene.remove(cardObj.mesh);
+					this.cards.splice(index, 1); // Remove card from the array
+					this.cardsCollected++;
+					this.updateScore(cardObj.type); // Assuming type property exists
+				}
 			}
 		});
 	}
+
+	checkCompletion(t) {
+		if (t >= 0.99) {  // Close to the end of the curve
+			this.displayScorePrompt();
+			this.resetBallPosition();  // Reset the ball to the start of the current curve
+			this.clearAndReloadCards();
+		}
+	}
+
+	animateBall() {
+		const t = ((Date.now() / 4000) % 1); // Use a modulo to loop the t value
+		const curve = this.curves[this.currentCurveIndex];
+		const point = curve.getPoint(t);
 	
+		// Translation to follow the curve
+		const ballMatrix = new THREE.Matrix4();
+		ballMatrix.makeTranslation(point.x, point.y, point.z);
+		
+		// Rotation for spinning effect
+		const rotationMatrix = new THREE.Matrix4();
+		const rotationSpeed = 0.1;  // Adjust the speed of rotation if necessary
+		rotationMatrix.makeRotationY((Date.now() * rotationSpeed) % (Math.PI * 2));
+		ballMatrix.multiply(rotationMatrix);
+	
+		this.ball.matrix = ballMatrix;
+		this.ball.matrixAutoUpdate = false;
+	
+		this.checkCollisions(point); // Handle collisions in a separate method
+		this.checkCompletion(t);
+	}
 
-    checkCollision() {
-        this.cards.forEach(card => {
-            if (card.object.visible) {
-                const distance = this.ball.position.distanceTo(card.object.position);
-                if (distance < 3) {
-                    card.object.visible = false;
-                    this.collectedCards++;
-                }
-            }
-        });
-
-        const t = (performance.now() % 10000) / 10000; // 0 <= t <= 1 over 10 seconds
-        if (t > 0.99) {
-            const fairPlay = 100 * Math.pow(2, -((this.collectedCards % 3) + 10 * Math.floor(this.collectedCards / 3)) / 10);
-            //alert(`Fair Play score: ${fairPlay.toFixed(2)}`);
-            this.collectedCards = 0;
-        }
-    }
-
-    createRotationMatrix(axis, angle) {
-        const rotationMatrix = new THREE.Matrix4();
-        switch (axis) {
-            case 'x':
-                rotationMatrix.makeRotationX(this.degreesToRadians(angle));
-                break;
-            case 'y':
-                rotationMatrix.makeRotationY(this.degreesToRadians(angle));
-                break;
-        }
-        return rotationMatrix;
-    }
+	clearAndReloadCards() {
+		// Remove all cards from the scene
+		this.cards.forEach(cardObj => {
+			this.scene.remove(cardObj.mesh);
+		});
+		this.cards = [];  // Clear the cards array
+	
+		// Reset card counters if necessary
+		this.numYellowCards = 0;
+		this.numRedCards = 0;
+	
+		// Reload new cards
+		this.initMultipleCards(); 
+	}
+	
+	updateScore(cardType) {
+		if (cardType === 'yellow') {
+			this.numYellowCards++;  // Increment yellow card count
+		} else if (cardType === 'red') {
+			this.numRedCards++;    // Increment red card count
+		}
+	}
+	
+	calculateFairPlayScore() {
+		// Fair Play Score Calculation
+		return 100 * Math.pow(2, (-this.numYellowCards + 10 * this.numRedCards) / 10);
+	}
+	
+	displayScorePrompt() {
+		const fairPlayScore = this.calculateFairPlayScore();
+		//alert(`Curve completed. Fair Play score: ${fairPlayScore.toFixed(2)}. Yellow cards collected: ${this.numYellowCards}, Red cards collected: ${this.numRedCards}`);
+		// Reset counts for the next run
+		this.numYellowCards = 0;
+		this.numRedCards = 0;
+	}
 }
 
 new ThreeDScene();
