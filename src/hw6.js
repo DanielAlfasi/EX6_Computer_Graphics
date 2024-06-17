@@ -365,6 +365,35 @@ class ThreeDScene {
         }
     }
 
+    resetBallPosition() {
+        const startPoint = this.curves[this.currentCurveIndex].getPoint(0);
+        const ballMatrix = new THREE.Matrix4();
+        ballMatrix.makeTranslation(startPoint.x, startPoint.y, startPoint.z);
+        this.ball.matrix.copy(ballMatrix);
+    }
+
+
+    checkCollision() {
+        this.cards.forEach(card => {
+            if (card.object.visible) {
+                const distance = this.ball.position.distanceTo(card.object.position);
+                if (distance < 3) {
+                    card.object.visible = false;
+                    this.collectedCards++;
+                    this.resetBallPosition(); // Stop the ball's movement when it collides with a card
+                }
+            }
+        });
+
+        const elapsedTime = performance.now() / 1000;
+        const t = elapsedTime / 5;
+        if (t % 1 > 0.99) {
+            const fairPlay = 100 * Math.pow(2, -((this.collectedCards % 3) + 10 * Math.floor(this.collectedCards / 3)) / 10);
+            // alert(`Fair Play score: ${fairPlay.toFixed(2)}`);
+            this.collectedCards = 0;
+        }
+    }
+
     handleKeyPress(event) {
         switch (event.key) {
             case 'w':
