@@ -102,7 +102,7 @@ class ThreeDScene {
             backNetMatrix.makeTranslation(0, 0, -11.5);
             backNetMatrix.multiply(rotationMatrix);
             const backNetGeometry = new THREE.PlaneGeometry(120, 46.2);
-            const backNetMaterial = new THREE.MeshBasicMaterial({ color: 'lightgrey', side: THREE.DoubleSide });
+            const backNetMaterial = new THREE.MeshBasicMaterial({ color: 'lightgrey', side: THREE.DoubleSide, opacity: 0.5});
             const backNet = new THREE.Mesh(backNetGeometry, backNetMaterial);
             backNet.applyMatrix4(backNetMatrix);
             return backNet;
@@ -172,7 +172,7 @@ class ThreeDScene {
     initBall() {
         const ballMatrix = new THREE.Matrix4();
         ballMatrix.makeTranslation(0, 0, 100);
-        const ballTexture = new THREE.TextureLoader().load('path/to/soccer.jpg');
+        const ballTexture = new THREE.TextureLoader().load('src/textures/soccer_ball.jpg');
         const ballGeometry = new THREE.SphereGeometry(3, 32, 32);
         const ballMaterial = new THREE.MeshPhongMaterial({ map: ballTexture });
         this.ball = new THREE.Mesh(ballGeometry, ballMaterial);
@@ -221,7 +221,7 @@ class ThreeDScene {
         this.cards = [];
 
         for (let i = 0; i < 6; i++) {
-            const cardTexture = new THREE.TextureLoader().load('path/to/card.jpg');
+            const cardTexture = new THREE.TextureLoader().load('src/textures/yellow_card.jpg');
             const cardGeometry = new THREE.BoxGeometry(4, 6, 0.1);
             const cardMaterial = new THREE.MeshPhongMaterial({ map: cardTexture, transparent: true, opacity: 0.8 });
             const card = new THREE.Mesh(cardGeometry, cardMaterial);
@@ -318,7 +318,7 @@ class ThreeDScene {
         const t = (performance.now() % 10000) / 10000; // 0 <= t <= 1 over 10 seconds
         if (t > 0.99) {
             const fairPlay = 100 * Math.pow(2, -((this.collectedCards % 3) + 10 * Math.floor(this.collectedCards / 3)) / 10);
-            alert(`Fair Play score: ${fairPlay.toFixed(2)}`);
+            //alert(`Fair Play score: ${fairPlay.toFixed(2)}`);
             this.collectedCards = 0;
         }
     }
