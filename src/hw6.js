@@ -22,7 +22,7 @@ class ThreeDScene {
         this.scene.background = texture;
 
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
-        this.isOrbitEnabled = true;
+        this.isOrbitEnabled = false;
         this.animationXEnabled = false;
         this.animationYEnabled = false;
         this.speedFactor = 1;
@@ -55,18 +55,25 @@ class ThreeDScene {
     }
 
 	updateCamera() {
-		const t = ((Date.now() / 4000) % 1); // Slower increment rate
+		const t = ((Date.now() / 8000) % 1);
 		const curve = this.curves[this.currentCurveIndex];  // Use the current curve
 		const point = curve.getPoint(t);
 
-        if (!this.isOrbitEnabled) {
-            // Calculate the new camera position with an offset, only modifying the Z-coordinate
-            const cameraMatrix = new THREE.Matrix4();
-            const fixedY = 30;  // Maintain a constant Y offset
-            const fixedX = 0;   // Maintain a constant X position
-            const zOffset = 150;  // Distance behind the ball on the Z-axis
-            cameraMatrix.makeTranslation(fixedX, fixedY, point.z + zOffset);
-            this.camera.matrix = cameraMatrix;
+        if (true) {
+        // Calculate the new camera position with an offset, only modifying the Z-coordinate
+        const cameraMatrix = new THREE.Matrix4();
+        const fixedY = 30;  // Maintain a constant Y offset
+        const fixedX = 0;   // Maintain a constant X position
+        const zOffset = 150;  // Distance behind the ball on the Z-axis
+        cameraMatrix.makeTranslation(fixedX, fixedY, point.z + zOffset);
+        this.camera.matrix = cameraMatrix;
+        }
+
+        if (this.isOrbitEnabled) {
+            this.camera.matrixAutoUpdate = true;
+        }
+        else
+        {
             this.camera.matrixAutoUpdate = false;
         }
 
@@ -252,21 +259,21 @@ class ThreeDScene {
 	
 		// Right Winger Route 
 		const curve1 = new THREE.QuadraticBezierCurve3(
-			new THREE.Vector3(0, 0, 300), // Start further back
+			new THREE.Vector3(0, 0, 1000), // Start further back
 			new THREE.Vector3(150, 0, 150), // Control point further out
 			new THREE.Vector3(0, 0, 0) // End at the goal
 		);
 	
 		// Center Forward Route 
 		const curve2 = new THREE.QuadraticBezierCurve3(
-			new THREE.Vector3(0, 0, 300), // Start further back
+			new THREE.Vector3(0, 0, 1000), // Start further back
 			new THREE.Vector3(0, 150, 150), // Control point further out
 			new THREE.Vector3(0, 0, 0) // End at the goal
 		);
 	
 		// Left Winger Route 
 		const curve3 = new THREE.QuadraticBezierCurve3(
-			new THREE.Vector3(0, 0, 300), // Start further back
+			new THREE.Vector3(0, 0, 1000), // Start further back
 			new THREE.Vector3(-150, 0, 150), // Control point further out
 			new THREE.Vector3(0, 0, 0) // End at the goal
 		);
@@ -384,7 +391,7 @@ class ThreeDScene {
 	}
 
 	animateBall() {
-		const t = ((Date.now() / 4000) % 1); // Use a modulo to loop the t value
+		const t = ((Date.now() / 8000) % 1); // Use a modulo to loop the t value
 		const curve = this.curves[this.currentCurveIndex];
 		const point = curve.getPoint(t);
 	
@@ -394,7 +401,7 @@ class ThreeDScene {
 		
 		// Rotation for spinning effect
 		const rotationMatrix = new THREE.Matrix4();
-		const rotationSpeed = 0.1;  // Adjust the speed of rotation if necessary
+		const rotationSpeed = 0.001; 
 		rotationMatrix.makeRotationY((Date.now() * rotationSpeed) % (Math.PI * 2));
 		ballMatrix.multiply(rotationMatrix);
 	
@@ -412,7 +419,7 @@ class ThreeDScene {
 		});
 		this.cards = [];  // Clear the cards array
 	
-		// Reset card counters if necessary
+		// Reset card counters
 		this.numYellowCards = 0;
 		this.numRedCards = 0;
 	
@@ -422,9 +429,9 @@ class ThreeDScene {
 	
 	updateScore(cardType) {
 		if (cardType === 'yellow') {
-			this.numYellowCards++;  // Increment yellow card count
+			this.numYellowCards++; 
 		} else if (cardType === 'red') {
-			this.numRedCards++;    // Increment red card count
+			this.numRedCards++;   
 		}
 	}
 	
@@ -435,7 +442,8 @@ class ThreeDScene {
 	
 	displayScorePrompt() {
 		const fairPlayScore = this.calculateFairPlayScore();
-		//alert(`Curve completed. Fair Play score: ${fairPlayScore.toFixed(2)}. Yellow cards collected: ${this.numYellowCards}, Red cards collected: ${this.numRedCards}`);
+		alert(`Curve completed. Fair Play score: ${fairPlayScore.toFixed(2)}. Yellow cards collected: ${this.numYellowCards}, Red cards collected: ${this.numRedCards}`);
+
 		// Reset counts for the next run
 		this.numYellowCards = 0;
 		this.numRedCards = 0;
