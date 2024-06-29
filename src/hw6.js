@@ -1,8 +1,7 @@
 import { OrbitControls } from './OrbitControls.js';
-//import * as THREE from 'three';
-
 
 class ThreeDScene {
+    // Initialize the scene, camera, renderer, controls, objects, and event listeners
     constructor() {
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -34,9 +33,7 @@ class ThreeDScene {
         this.initLighting();
 		this.initCurves();
         this.initMultipleCards();
-
         this.currentCurveIndex = 0; 
-
         this.controls.update();
 
         document.addEventListener('keydown', this.handleKeyPress.bind(this));
@@ -44,27 +41,29 @@ class ThreeDScene {
         this.animate();
     }
 
+    // Convert degrees to radians
     degreesToRadians(degrees) {
         return degrees * (Math.PI / 180);
     }
 
+    // Set initial camera position
     initCameraPosition() {
         const cameraMatrix = new THREE.Matrix4();
         cameraMatrix.makeTranslation(0, 30, 150);
         this.camera.applyMatrix4(cameraMatrix);
     }
 
+    // Update the camera position based on a curve and enable/disable orbit controls
 	updateCamera() {
 		const t = ((Date.now() / 8000) % 1);
-		const curve = this.curves[this.currentCurveIndex];  // Use the current curve
+		const curve = this.curves[this.currentCurveIndex];
 		const point = curve.getPoint(t);
 
         if (true) {
-        // Calculate the new camera position with an offset, only modifying the Z-coordinate
         const cameraMatrix = new THREE.Matrix4();
-        const fixedY = 30;  // Maintain a constant Y offset
-        const fixedX = 0;   // Maintain a constant X position
-        const zOffset = 150;  // Distance behind the ball on the Z-axis
+        const fixedY = 30;
+        const fixedX = 0;
+        const zOffset = 150;
         cameraMatrix.makeTranslation(fixedX, fixedY, point.z + zOffset);
         this.camera.matrix = cameraMatrix;
         }
@@ -81,7 +80,7 @@ class ThreeDScene {
 	}
 	
 	
-
+    // Initialize the goal object with posts, supports, nets, and rings
     initGoal() {
         const scaleMatrix = new THREE.Matrix4();
         scaleMatrix.makeScale(0.95, 0.95, 0.95);
@@ -197,17 +196,7 @@ class ThreeDScene {
         this.scene.add(this.goalObject);
     }
 
-    initBall1() {
-        const ballMatrix = new THREE.Matrix4();
-        ballMatrix.makeTranslation(0, 0, 100);
-        const ballTexture = new THREE.TextureLoader().load('src/textures/soccer_ball.jpg');
-        const ballGeometry = new THREE.SphereGeometry(3, 32, 32);
-        const ballMaterial = new THREE.MeshPhongMaterial({ map: ballTexture });
-        this.ball = new THREE.Mesh(ballGeometry, ballMaterial);
-        this.ball.applyMatrix4(ballMatrix);
-        this.scene.add(this.ball);
-    }
-
+    // Initialize the soccer ball object
 	initBall() {
 		const ballTexture = new THREE.TextureLoader().load('src/textures/soccer_ball.jpg');
 		const ballGeometry = new THREE.SphereGeometry(3, 32, 32);  // Sphere centered at origin
@@ -216,7 +205,7 @@ class ThreeDScene {
 		this.scene.add(this.ball);  // Initially add the ball to the scene without setting its position
 	}
 	
-
+    // Set up directional and ambient lighting for the scene
     initLighting() {
         const directionalLight1 = new THREE.DirectionalLight(0xffffff, 1);
         const directionalLight1Matrix = new THREE.Matrix4();
@@ -234,54 +223,36 @@ class ThreeDScene {
         this.scene.add(ambientLight);
     }
 
-    initBezierCurves() {
-        this.curves = [
-            new THREE.QuadraticBezierCurve3(
-                new THREE.Vector3(0, 0, 100),
-                new THREE.Vector3(-50, 0, 50),
-                new THREE.Vector3(0, 0, 0)
-            ),
-            new THREE.QuadraticBezierCurve3(
-                new THREE.Vector3(0, 0, 100),
-                new THREE.Vector3(0, 50, 50),
-                new THREE.Vector3(0, 0, 0)
-            ),
-            new THREE.QuadraticBezierCurve3(
-                new THREE.Vector3(0, 0, 100),
-                new THREE.Vector3(50, 0, 50),
-                new THREE.Vector3(0, 0, 0)
-            )
-        ];
-    }
-
+    // Initialize multiple Bezier curves for ball animation paths
 	initCurves() {
 		this.curves = [];
 	
 		// Right Winger Route 
 		const curve1 = new THREE.QuadraticBezierCurve3(
-			new THREE.Vector3(0, 0, 1000), // Start further back
-			new THREE.Vector3(150, 0, 150), // Control point further out
-			new THREE.Vector3(0, 0, 0) // End at the goal
+			new THREE.Vector3(0, 0, 1000), 
+			new THREE.Vector3(150, 0, 150),
+			new THREE.Vector3(0, 0, 0)
 		);
 	
 		// Center Forward Route 
 		const curve2 = new THREE.QuadraticBezierCurve3(
-			new THREE.Vector3(0, 0, 1000), // Start further back
-			new THREE.Vector3(0, 150, 150), // Control point further out
-			new THREE.Vector3(0, 0, 0) // End at the goal
+			new THREE.Vector3(0, 0, 1000),
+			new THREE.Vector3(0, 150, 150),
+			new THREE.Vector3(0, 0, 0)
 		);
 	
 		// Left Winger Route 
 		const curve3 = new THREE.QuadraticBezierCurve3(
-			new THREE.Vector3(0, 0, 1000), // Start further back
-			new THREE.Vector3(-150, 0, 150), // Control point further out
-			new THREE.Vector3(0, 0, 0) // End at the goal
+			new THREE.Vector3(0, 0, 1000),
+			new THREE.Vector3(-150, 0, 150),
+			new THREE.Vector3(0, 0, 0)
 		);
 	
 		this.curves.push(curve1, curve2, curve3);
-		this.currentCurveIndex = 0; // Start with the first curve
+		this.currentCurveIndex = 0;
 	}
 
+    // Initialize multiple cards on Bezier curves with random textures
 	initMultipleCards() {
 		this.numYellowCards = 0;
 		this.numRedCards = 0;
@@ -312,7 +283,7 @@ class ThreeDScene {
 		}
 	}
 	
-	
+	// Position a card mesh on a specified curve at parameter t
 	positionCardOnCurve(t, card, curveIndex) {
 		const curve = this.curves[curveIndex];  // Select the curve based on the index
 		const point = curve.getPoint(t);
@@ -322,7 +293,7 @@ class ThreeDScene {
 		card.matrixAutoUpdate = false;
 	}
 	
-
+    // Toggle wireframe mode for goal object and soccer ball
     toggleWireframe() {
         this.goalObject.traverse((child) => {
             if (child instanceof THREE.Mesh) {
@@ -332,6 +303,7 @@ class ThreeDScene {
         this.ball.material.wireframe = !this.ball.material.wireframe;
     }
 
+    // Reset the ball position to the start of the current curve
 	resetBallPosition() {
 		this.currentCurveIndex = 0; 
 		const startPoint = this.curves[this.currentCurveIndex].getPoint(0);
@@ -340,6 +312,7 @@ class ThreeDScene {
 		this.ball.matrix = ballMatrix;
 	}	
 
+    // Handle keyboard events for toggling orbit mode, wireframe mode, and changing animation paths
     handleKeyPress(event) {
         switch (event.key) {
             case 'o':
@@ -357,31 +330,32 @@ class ThreeDScene {
         }
     }
 
+    // Animation loop that updates controls, ball movement, camera, and renders the scene
 	animate() {
 		requestAnimationFrame(this.animate.bind(this));
 		this.controls.enabled = this.isOrbitEnabled;
 		this.controls.update();
-		//console.log(this.controls.enabled);
 		this.animateBall();
 		this.updateCamera();
 		this.renderer.render(this.scene, this.camera);
 	}
 
+    // Check collisions between the ball and cards on the current curve
 	checkCollisions(point) {
-		// Check collision for cards on the current curve
 		this.cards.forEach((cardObj, index) => {
 			if (cardObj.curveIndex === this.currentCurveIndex) {
 				const cardPosition = new THREE.Vector3().setFromMatrixPosition(cardObj.mesh.matrix);
 				if (cardPosition.distanceTo(point) < 5) {
 					this.scene.remove(cardObj.mesh);
-					this.cards.splice(index, 1); // Remove card from the array
+					this.cards.splice(index, 1);
 					this.cardsCollected++;
-					this.updateScore(cardObj.type); // Assuming type property exists
+					this.updateScore(cardObj.type);
 				}
 			}
 		});
 	}
 
+    // Check if the ball has completed the current curve's animation path
 	checkCompletion(t) {
 		if (t >= 0.99) {  // Close to the end of the curve
 			this.displayScorePrompt();
@@ -390,6 +364,7 @@ class ThreeDScene {
 		}
 	}
 
+    // Animate the ball along its current curve path, handle collisions and completion
 	animateBall() {
 		const t = ((Date.now() / 8000) % 1); // Use a modulo to loop the t value
 		const curve = this.curves[this.currentCurveIndex];
@@ -408,16 +383,16 @@ class ThreeDScene {
 		this.ball.matrix = ballMatrix;
 		this.ball.matrixAutoUpdate = false;
 	
-		this.checkCollisions(point); // Handle collisions in a separate method
+		this.checkCollisions(point); // Handle collisions in a helper method
 		this.checkCompletion(t);
 	}
 
+    // Remove all cards from the scene, reset counters, and reload new cards
 	clearAndReloadCards() {
-		// Remove all cards from the scene
 		this.cards.forEach(cardObj => {
 			this.scene.remove(cardObj.mesh);
 		});
-		this.cards = [];  // Clear the cards array
+		this.cards = [];
 	
 		// Reset card counters
 		this.numYellowCards = 0;
@@ -427,6 +402,7 @@ class ThreeDScene {
 		this.initMultipleCards(); 
 	}
 	
+    // Update scores based on collected card types (yellow or red)
 	updateScore(cardType) {
 		if (cardType === 'yellow') {
 			this.numYellowCards++; 
@@ -435,11 +411,13 @@ class ThreeDScene {
 		}
 	}
 	
+    // Calculate and return a fair play score based on collected cards
 	calculateFairPlayScore() {
 		// Fair Play Score Calculation
 		return 100 * Math.pow(2, (-this.numYellowCards + 10 * this.numRedCards) / 10);
 	}
 	
+    // Display a score prompt dialog showing fair play score and collected cards
 	displayScorePrompt() {
 		const fairPlayScore = this.calculateFairPlayScore();
 		alert(`Curve completed. Fair Play score: ${fairPlayScore.toFixed(2)}. Yellow cards collected: ${this.numYellowCards}, Red cards collected: ${this.numRedCards}`);
